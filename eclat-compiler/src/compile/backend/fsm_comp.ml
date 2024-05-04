@@ -376,12 +376,12 @@ let rec to_s ~statics ~sums gs e x k =
               | _ -> assert false 
       in
       let pi = Ast.{statics;sums;main=e1} in
-      let rdy,res,compute,(ts,s1) = compile (* ~result:x*) pi in
+      let rdy,res,compute,(ts,s1) = compile ~result:y pi in
       let s1' = S_fsm((Ast.gensym ~prefix:"id" ()),rdy,res,compute,ts,s1,false) in
       (SMap.empty, SMap.empty,
-      seq_ s1' @@
       seq_ (let_plug_s (A_call(Runtime(Not),A_var rdy)) (fun z ->
              S_if(z, set_ res (to_a ~sums e0), None))) @@
+      seq_ s1' @@
       seq_ (set_ y (A_var res)) @@
       return_ @@ set_ x (A_var res))
 

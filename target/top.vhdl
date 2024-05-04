@@ -1,9 +1,9 @@
 -- code generated from the following source code:
---   ../hlpp/jdlv/life.ecl
+--   ../benchs/game-of-life/v1/v1.ecl
 --
 -- with the following command:
 --
---    ./eclat -relax ../hlpp/jdlv/life.ecl -main=main_yosys -yosys-ecp5 -unsafe -arg=0
+--    ./eclat -relax ../benchs/game-of-life/v1/v1.ecl -intel-max10 -main=main_intel
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -13,9 +13,16 @@ use work.runtime.all;
 
 
 entity top is
-  port (signal clk48 : in std_logic;
-        signal i : in std_logic;
-        signal o : out std_logic
+  port (signal MAX10_CLK1_50 : in std_logic;
+        signal SW : in std_logic_vector(0 to 9);
+        signal KEY : in std_logic_vector(0 to 1);
+        signal LEDR : out std_logic_vector(0 to 9);
+        signal HEX0 : out std_logic_vector(0 to 7);
+        signal HEX1 : out std_logic_vector(0 to 7);
+        signal HEX2 : out std_logic_vector(0 to 7);
+        signal HEX3 : out std_logic_vector(0 to 7);
+        signal HEX4 : out std_logic_vector(0 to 7);
+        signal HEX5 : out std_logic_vector(0 to 7)
   );
 end entity;
 
@@ -26,33 +33,39 @@ architecture rtl of top is
               signal run : in std_logic;
               signal reset : in std_logic;
               signal rdy : out value(0 to 0);
-              signal argument : in value(0 to 0);
-              signal result : out value(0 to 0)
+              signal argument : in value(0 to 11);
+              signal result : out value(0 to 57)
         );
     end component;
     signal RST : std_logic := '1';
-    signal argument : value(0 to 0);
-    signal result : value(0 to 0);
+    signal argument : value(0 to 11);
+    signal result : value(0 to 57);
     signal ready : value (0 to 0);
     begin
-        process (clk48)
+        process (MAX10_CLK1_50)
             begin
-            if (rising_edge(clk48)) then
+            if (rising_edge(MAX10_CLK1_50)) then
                 if RST = '1' then
                     RST <= '0';
                 end if;
             end if;
         end process;
-argument <= "" & i;
+argument <= SW & KEY;
 main_CC : component main
-        port map (clk => clk48,
+        port map (clk => MAX10_CLK1_50,
                   run => '1',
                   reset => RST,
                   rdy => ready,
                   argument => argument,
                   result => result
                   );
-o <= result(0);
+LEDR <= result(0 to 9);
+HEX0 <= result(10 to 17);
+HEX1 <= result(18 to 25);
+HEX2 <= result(26 to 33);
+HEX3 <= result(34 to 41);
+HEX4 <= result(42 to 49);
+HEX5 <= result(50 to 57);
 
 end architecture;
 

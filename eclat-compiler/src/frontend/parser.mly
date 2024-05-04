@@ -45,9 +45,9 @@
 %token PLUS MINUS TIMES LT LE GT GE NEQ NOT MOD DIV AMP_AMP OR
 %token XOR LAND LOR LXOR LSL LSR ASR RESIZE_INT TUPLE_OF_INT INT_OF_TUPLE
 %token TUPLE_GET TUPLE_UPDATE
-%token UNROLL AT
+%token UNROLL AT AT_AT
 %token GET SET LENGTH CREATE
-%token SIZE_CREATE
+%token SIZE_CREATE VECTOR_CREATE
 
 %token EOF
 %token SEMI_SEMI
@@ -289,16 +289,6 @@ exp_desc:
             E_tuple (e::es)
         }
 
-| LPAREN e1=lexp PIPE_PIPE 
-         es=separated_nonempty_list(PIPE_PIPE,lexp) 
-  RPAREN
-| LPAREN e1=lexp PIPE_COMMA_PIPE 
-         es=separated_nonempty_list(PIPE_COMMA_PIPE,lexp)
-  RPAREN
-        {
-            E_par(e1::es)
-        }
-
 | e=lexp { e }
 
 arg_ty_unparen:
@@ -334,6 +324,15 @@ lexp_desc:
     /* variant of LET enforcing the defined function to be instantaneous */
         { let (p,e1) = enforce_node b in
           E_letIn(p,e1,e2) }
+| LPAREN e1=lexp PIPE_PIPE 
+         es=separated_nonempty_list(PIPE_PIPE,lexp) 
+  RPAREN
+| LPAREN e1=lexp PIPE_COMMA_PIPE 
+         es=separated_nonempty_list(PIPE_COMMA_PIPE,lexp)
+  RPAREN
+        {
+            E_par(e1::es)
+        }
 
 if_end:
 | e2=lexp { e2,E_const Unit }
@@ -379,7 +378,8 @@ app_exp_desc:
      | [] -> assert false
      (* | [e2] -> E_local_static_array(e1,e2, with_file $loc) *)
      | es' -> E_local_static_matrix(e1,es', with_file $loc) }
-| e1=aexp e2=aexp AT v=lvalue 
+| e1=aexp e2=aexp AT v=lvalue
+| e1=aexp e2=aexp AT_AT v=lvalue 
     { 
         E_app(e1,E_tuple[e2;v]) 
     }
@@ -512,6 +512,15 @@ aexp_desc:
                                   let x = Ast.gensym () in
                                   E_int_mapi(false,(P_var x,E_app(v,E_var x)), e, unknown ())
                 | _ -> assert false (* todo error *) }
+| VECTOR_CREATE e=exp {
+                match Ast_undecorated.remove_deco e with
+                | E_tuple[v;e] -> (match Ast_undecorated.remove_deco v with
+                                   | E_const(Int(n,_)) ->
+                                      E_app(E_const(Op(Runtime(Vector_make))),
+                                            E_tuple[E_const(C_size n);e])
+                                   | _ -> assert false)
+                | _ -> assert false (* todo error *) 
+            }
 | x=UNROLL AT k=INT_LIT { E_const (Op(Runtime(Unroll k))) }
 | x=IDENT { match x with
             | "vect_make" -> E_const (Op(Runtime(Vector_make)))

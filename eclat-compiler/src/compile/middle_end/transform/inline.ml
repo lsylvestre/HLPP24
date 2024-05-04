@@ -87,27 +87,6 @@ let inline_with_statics ~statics e =
                 E_par(es)),
                 E_const Unit)
 
-    (* | E_vector_mapi(_is_par,(p,e1),e2,ty) ->
-        has_changed := true;
-        let e1' = inline @@ e1 in
-        (match Types.canon ty with
-        | T_size n ->
-            let y = gensym () in
-            E_letIn(P_var y,e2,
-              let rec loop xs i =
-              if i >= n then E_vector(List.rev_map (fun x -> E_var x) xs) else
-              let z = gensym () in
-               let x = gensym () in
-              let ii = E_const(Int(i,Types.unknown())) in
-              E_letIn(P_var x, E_letIn(P_var z,
-                                    E_app(E_const(Op(Runtime (Vector_get (Types.unknown())))),
-                                    E_tuple[E_var y;ii]),
-                                Ast_subst.subst_p_e p (E_tuple[ii;E_var z]) e1'),
-              loop (x::xs) (i+1)) in loop [] 0)
-        (* Ast_pprint.pp_exp Format.std_formatter e0;  *)
-        | _ -> assert false (* todo error *)
-        )*)
-
     | e -> Ast_mapper.map inline e
   in 
   inline e

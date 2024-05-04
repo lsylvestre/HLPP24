@@ -5,6 +5,7 @@ type token =
   | XOR
   | WITH
   | VECTOR_MAPI
+  | VECTOR_CREATE
   | UP_IDENT of (string)
   | UNROLL
   | TYPE
@@ -96,6 +97,7 @@ type token =
   | COL
   | BOOL_LIT of (bool)
   | BANG
+  | AT_AT
   | AT
   | ASR
   | ARRAY_LENGTH

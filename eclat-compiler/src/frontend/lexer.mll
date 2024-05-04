@@ -64,6 +64,7 @@
        "create", CREATE;
        "length", LENGTH;
        "size_create", SIZE_CREATE;
+       "vect_create", VECTOR_CREATE;
        "vect_mapi", VECTOR_MAPI;
        "int_mapi", INT_MAPI
      ]
@@ -108,6 +109,7 @@ rule token = parse
 | "|]"                { PIPE_RBRACKET }
 | "[|"                { LBRACKET_PIPE }
 | '@'                 { AT }
+| "@@"                { AT_AT }
 | ','                 { COMMA }
 | ':'                 { COL }
 | '''                 { QUOTE }
