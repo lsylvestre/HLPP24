@@ -24,9 +24,8 @@ let next_cell_with_lines(i,cell,line0,line1,line2) =
 
 (* transform the world: an entire line is processed each 5 cycles *)
 let vect_array_life (world : bool vector<'a> array<'b>) : unit = 
-
   let first_line = get(world,0) in
-
+  
   let rec aux (line0,line1,i) : unit =
     if i < length(world) then
       (* prefetch the next line *)
@@ -40,11 +39,10 @@ let vect_array_life (world : bool vector<'a> array<'b>) : unit =
        let current_line = 
          vect_mapi(next,line1)      (* vect_mapi is a built-in, instantaneous operator *)
        in
-
        set(world,i,current_line);                  (* memory write, takes 2 cycles *)
        aux(line1,line2,i+1))                       (* tail call, takes 1 cycle *)
     else ()
-in aux(get(world,length(world)-1),first_line,0) ;;
+  in aux(get(world,length(world)-1),first_line,0) ;;
 
 
 (** ==== measure execution time ==== *)

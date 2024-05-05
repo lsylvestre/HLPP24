@@ -1,3 +1,5 @@
+(** Conway's Game Of Life, version 2 *)
+
 
 let sum_neighborhood(f,i,n) =
   f(i-n-1) + f(i-n) + f(i-n+1) + 
