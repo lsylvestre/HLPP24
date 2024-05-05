@@ -22,10 +22,11 @@ let next_cell_with_lines(i,cell,line0,line1,line2) =
   let sum : int<4> = sum_neighborhood(access,line0,line1,line2,i) in
   (cell & sum = 2) or (sum = 3) ;;
 
-(* transform the world *)
+(* transform the world: an entire line is processed each 5 cycles *)
 let vect_array_life (world : bool vector<'a> array<'b>) : unit = 
+
   let first_line = get(world,0) in
-  (* an entire line is processed each 5 cycles *)
+
   let rec aux (line0,line1,i) : unit =
     if i < length(world) then
       (* prefetch the next line *)
@@ -36,7 +37,9 @@ let vect_array_life (world : bool vector<'a> array<'b>) : unit =
        let next (j,cell) = 
          next_cell_with_lines(j,cell,line0,line1,line2)
        in
-       let current_line = vect_mapi(next,line1) in (* vect_mapi is a built-in operator *)
+       let current_line = 
+         vect_mapi(next,line1)      (* vect_mapi is a built-in, instantaneous operator *)
+       in
 
        set(world,i,current_line);                  (* memory write, takes 2 cycles *)
        aux(line1,line2,i+1))                       (* tail call, takes 1 cycle *)
