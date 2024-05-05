@@ -11,7 +11,7 @@ let sum_neighborhood(f,l0,l1,l2,i) =
   f(l0,i+1) + f(l1,i+1) + f(l2,i+1) ;;
 
 (* instantaneously transform one line of the world 
-   given neighboring lines *)
+   from the neighboring lines *)
 let next_cell_with_lines(i,cell,line0,line1,line2) =
   let access(l,i) = 
     let i_norm = if i >= vect_size l then i - vect_size l else
