@@ -1,6 +1,6 @@
 ## Game of Life, v2
 
-*The world is represented by an immutable vector of booleans.*
+*The world is represented by an immutable vector of booleans (i.e., a large immediate value).*
 
 ### Measure execution time
 

@@ -1,6 +1,6 @@
 ## Game of Life, v1
 
-*The world is represented by an array of booleans.*
+*The world is represented by an array of booleans (in shared memory)*
 
 ### Measure execution time
 

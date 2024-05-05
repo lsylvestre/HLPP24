@@ -2,7 +2,7 @@
 
 Eclat (*declarative language*) is an OCaml-like programming language, which is compiled to hardware descriptions for reconfiguring FPGAs.
 
-The language has a synchronous semantics to control timing, throughput and parallelism in the hardware applications.
+The language has a synchronous semantics to control timing, throughput and parallelism in the applications.
 
 This artefact is an extension of the Eclat compiler with shared memory (mutable arrays) implemented as RAM blocks on a FPGA. This extension supports concurrent memory accesses in a fair and predictable way.
 

@@ -1,11 +1,10 @@
 ## Game of Life, v3
 
-*The world is represented by an array of immutable vectors of booleans.*
+*The world is represented by an array of lines, each line is a vectors of booleans.*
 
 ### Measure execution time
 
-*Since the circuit is combinational, 
- it computes the entire world within one clock cycle.*
+*The program processes one line  each 5 clock cycles*
 
 ```
 $ ./eclat -relax ../benchs/game-of-life/v3/v3.ecl  -main=chrono_main
@@ -46,7 +45,7 @@ ghdl -r  tb_main --vcd=tb.vcd --stop-time=4000000ns
 -------- 
 -------- 
 
-... (see trace-v2.txt)
+... (see trace-v3.txt)
 ```
 
 ### Synthesis

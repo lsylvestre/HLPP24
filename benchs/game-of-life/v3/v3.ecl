@@ -1,8 +1,17 @@
+(** Conway's Game Of Life, version 3 *)
+
+(* The world is represented as an array of lines (i.e., shared memory 
+   implemented as RAM blocks). 
+   The lines are represented as boolean vectors (i.e., large immediate values) *)
+
+(* count alive neighbors *)
 let sum_neighborhood(f,l0,l1,l2,i) =
   f(l0,i-1) + f(l1,i-1) + f(l2,i-1) + 
   f(l0,i)               + f(l2,i) +
   f(l0,i+1) + f(l1,i+1) + f(l2,i+1) ;;
 
+(* instantaneously transform one line of the world 
+   given neighboring lines *)
 let next_cell_with_lines(i,cell,line0,line1,line2) =
   let access(l,i) = 
     let i_norm = if i >= vect_size l then i - vect_size l else
@@ -13,18 +22,24 @@ let next_cell_with_lines(i,cell,line0,line1,line2) =
   let sum : int<4> = sum_neighborhood(access,line0,line1,line2,i) in
   (cell & sum = 2) or (sum = 3) ;;
 
-let vect_array_life (world : bool vector<'a> array<'b>) : unit = let first_line = get(world,0) in
+(* transform the world *)
+let vect_array_life (world : bool vector<'a> array<'b>) : unit = 
+  let first_line = get(world,0) in
+  (* an entire line is processed each 5 cycles *)
   let rec aux (line0,line1,i) : unit =
     if i < length(world) then
+      (* prefetch the next line *)
       (let line2 = if i = length(world)-1 
                    then first_line 
-                   else get(world,i+1)
+                   else get(world,i+1)             (* memory read, takes 2 cycles *)
        in
        let next (j,cell) = 
          next_cell_with_lines(j,cell,line0,line1,line2)
        in
-       set(world,i,(vect_mapi(next,line1)));
-       aux(line1,line2,i+1))
+       let current_line = vect_mapi(next,line1) in (* vect_mapi is a built-in operator *)
+
+       set(world,i,current_line);                  (* memory write, takes 2 cycles *)
+       aux(line1,line2,i+1))                       (* tail call, takes 1 cycle *)
     else ()
 in aux(get(world,length(world)-1),first_line,0) ;;
 
@@ -36,14 +51,13 @@ let counter () =
 
 (**
    $ ./eclat ../benchs/game-of-life/v3/v3.ecl  -main=chrono_main
-   $ make simul
-     ~> execution time = 1 cycles
+   $ make simul NS=4000000
+     ~> execution time = 326 cycles
 *)
 let chrono_main () =
   let cy = counter () in
   let ((),rdy) =
     exec
-      let n = 64 in
       let w0 : bool vector<64> = vect_create(64,false) in
       let w : bool vector<64> array<64> = create 64 in
       set(w,0,w0);
@@ -70,6 +84,7 @@ let print_world (world) : unit =
   print_string "==============";
   print_newline () ;;
 
+(* ==== RTL simulation (displaying successive generations) ==== *)
 
 (** 
     $ ./eclat -relax ../benchs/game-of-life/v3/v3.ecl  -main=test_main
@@ -91,9 +106,10 @@ let test_main () =
       loop(i-1)
     )
   in 
-  loop(2000);
+  loop(2000);    (* 2000 successive generations *)
 
   if vect_nth(get(w,0),0) then 0 else 1 ;;
+
 
 (** ==== synthesis ==== *)
 
