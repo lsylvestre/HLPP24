@@ -1,3 +1,10 @@
+(* parallel implementation of map using a worker farm *)
+
+(* 
+     $ ./eclat ../benchs/skeletons/map_farm/map_farm.ecl
+     $ make simul NS=400000
+*)
+
 let map_worker (f,r,src,dst) =
   let rec loop() =
     let i = get(r,0) in

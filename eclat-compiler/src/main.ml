@@ -20,6 +20,8 @@ let typing_with_tyB = ref true
 
 let prop_fsm_flag = ref false
 
+let tailrec_check_flag = ref true
+
 let arguments = ref ""
 let top_wrapper = ref ""
 let clock_top = ref "clk"
@@ -74,7 +76,8 @@ let () =
                   "type and exit.");
     ("-notyB",      Arg.Clear typing_with_tyB,
                   "do not run an additional type checking phase.");
-
+    ("-no-tailrec-check", Arg.Clear tailrec_check_flag,
+                  "do not check that recursive functions are tail-recursive");
     ("-pp",      Arg.String Display_internal_steps.set_print_mode,
                  "display the output of the specified (intermediate)\
                  \ compilation pass specified.\n\tPossible values:\
@@ -180,6 +183,9 @@ let main () : unit =
     Format.fprintf Format.std_formatter "@,%a\n" pp_ty ty;
     exit 0;
   end;
+
+  if !tailrec_check_flag then
+    Check_tail_call.check_pi pi;
 
   let pi = if Operators.(!Operators.flag_no_assert || !Operators.flag_no_print)
            then Clean_simul.clean_pi

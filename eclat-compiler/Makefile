@@ -47,6 +47,7 @@ OBJS= $(SRC_DIR)/prelude.cmx \
       $(SRC_DIR)/compile/combinational.cmx \
       $(SRC_DIR)/typing/typing.cmx \
       $(SRC_DIR)/syntax/ast_mk.cmx \
+      $(SRC_DIR)/compile/middle_end/check_tail_call.cmx \
       $(SRC_DIR)/compile/middle_end/normalize/fun_assign_name.cmx \
       \
       $(SRC_DIR)/compile/middle_end/normalize/propagation.cmx \
