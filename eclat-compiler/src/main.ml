@@ -125,7 +125,7 @@ let () =
                                  Gen_vhdl.intel_xilinx_target := true;
                                  clock_top := clock_top_xilinx_zybo;
                                  top_wrapper := top_wrapper_xilinx_zybo),
-     "synthesis for Intel MAX 10 FPGA");
+     "synthesis for Xilinx Zybo FPGA");
 
     ("-yosys-ecp5", Arg.Unit (fun () ->
                                  Operators.flag_no_assert := true;
@@ -133,7 +133,7 @@ let () =
                                  Gen_vhdl.ram_inference := true;
                                  clock_top := "clk48";
                                  top_wrapper := top_wrapper_yosys_ecp5),
-     "synthesis for Intel MAX 10 FPGA");
+     "synthesis for ECP5 FPGA with Yosys");
 
     ("-unsafe", Arg.Clear Insert_bound_checking.insert_bound_checking_flag,
         "Do not compile bounds checking on array access");
