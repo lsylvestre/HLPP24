@@ -20,7 +20,7 @@ open Pattern
 (** [fv ~statics ~decls e] returns the free variables of [e] that are not
     global definitions (bound in ~static and ~decls) *)
 let fv ~statics e =
-  SMap.filter (fun x _ -> not (SMap.mem x statics)) (Free_vars.fv ~get_arrays:false e)
+  SMap.filter (fun x _ -> not (SMap.mem x statics)) (Free_vars.fv ~get_arrays:true e)
 
 (** [has_changed] boolean flag setted to true each time a [lift] pass modifies
     the input expression *)
@@ -173,10 +173,10 @@ let globalize_e (e:e) : ((x * e) list * e) =
         let ds1,e1' = glob e1 in
         let ds2,e2' = glob e2 in
         ds1@ds2,E_app(e1',e2')
-    (* | E_letIn(P_var f,(E_fix _ | E_fun _ as v),e2) ->
+    | E_letIn(P_var f,(E_fix _ | E_fun _ as v),e2) ->
         let dsv,v = glob v in
         let ds,e2' = glob e2 in
-        (dsv@[(f,v)]@ds),e2'*)
+        (dsv@[(f,v)]@ds),e2'
     | E_fix(f,(p,e1)) ->
         let ds1,e1' = glob e1 in
         let xs = vars_of_p p in
@@ -269,10 +269,14 @@ let globalize_e (e:e) : ((x * e) list * e) =
         let ds1,e1' = glob e1 in
         let ds0,e0' = glob e0 in
         ds0,E_reg((p,declare ds1 e1'),e0',l)
-    | E_exec(e1,e0,l) ->
+    | E_exec(e1,e0,eo,l) ->
         let ds1,e1' = glob e1 in
         let ds0,e0' = glob e0 in
-        ds0,E_exec(declare ds1 e1',e0',l)
+        let ds3,eo' = match eo with 
+                      | None -> [],eo 
+                      | Some e3 -> let ds3,e3' = glob e3 in
+                    ds3,Some e3 in
+        ds0@ds3,E_exec(declare ds1 e1',e0',eo',l)
     | E_for(x,e_st1,e_st2,e3,loc) ->
         let ds1,e_st1' = glob e_st1 in
         let ds2,e_st2' = glob e_st2 in

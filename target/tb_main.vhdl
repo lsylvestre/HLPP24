@@ -1,9 +1,9 @@
 -- code generated from the following source code:
---   ../benchs/game-of-life/v1/v1.ecl
+--   
 --
 -- with the following command:
 --
---    ./eclat -relax ../benchs/game-of-life/v1/v1.ecl -intel-max10 -main=main_intel
+--    ./eclat
 
 
 library ieee;
@@ -23,12 +23,12 @@ architecture tb of tb_main is
       signal reset  : in std_logic;
       signal run    : in std_logic;
       signal rdy    : out value(0 to 0);
-      signal argument : in value(0 to 11);
-      signal result : out value(0 to 57));
+      signal argument : in value(0 to 0);
+      signal result : out value(0 to 32));
 end component;
   signal tb_run: std_logic;
-  signal tb_argument: std_logic_vector(0 to 11);
-  signal tb_result: std_logic_vector(0 to 57);
+  signal tb_argument: std_logic_vector(0 to 0);
+  signal tb_result: std_logic_vector(0 to 32);
   signal tb_rdy: value(0 to 0);
   signal tb_clk: std_logic;
   signal rst: std_logic;

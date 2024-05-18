@@ -50,9 +50,11 @@ let fv ?(get_arrays=true) ?(xs=SMap.empty) e =
       let ys = vars_of_p p in
       let xs' = xs++ys in
       aux xs' e1 ++ aux xs e0
-  | E_exec(e1,e2,_k) ->
+  | E_exec(e1,e2,eo,_k) ->
       (* _k is in a different name space than variables *)
-      aux xs e1 ++ aux xs e2
+      aux xs e1 ++ aux xs e2 ++ (match eo with 
+                                 | None -> SMap.empty 
+                                 | Some e3 -> aux xs e3)
   | E_ref(e1) ->
       aux xs e1
   | E_get(e1) ->
@@ -64,28 +66,28 @@ let fv ?(get_arrays=true) ?(xs=SMap.empty) e =
       aux xs e1
   | E_array_length(x) ->
       if get_arrays 
-      then SMap.singleton x () 
+      then fv_var xs x
       else SMap.empty
   | E_array_get(x,e1) ->
       let vs = aux xs e1 in
       if get_arrays 
-      then SMap.add x () vs 
+      then fv_var xs x ++ vs 
       else vs
   | E_array_set(x,e1,e2) ->
       let vs = aux xs e1 ++ aux xs e2 in
       if get_arrays 
-      then SMap.add x () vs 
+      then fv_var xs x ++ vs 
       else vs
   | E_local_static_matrix(e1,es,_) ->
       aux xs e1 ++ fv_list xs es
   | E_matrix_size(x,_) ->
       if get_arrays 
-      then SMap.singleton x () 
+      then fv_var xs x
       else SMap.empty
   | E_matrix_get(x,es) ->
       let vs = fv_list xs es in
       if get_arrays 
-      then SMap.add x () vs 
+      then fv_var xs x ++ vs 
       else vs
  | E_matrix_set(x,es,e) ->
       let vs = fv_list xs es ++ aux xs e in
@@ -163,9 +165,11 @@ let fv_arrays ?(xs=SMap.empty) e =
       let ys = vars_of_p p in
       let xs' = xs++ys in
       aux xs' e1 ++ aux xs e0
-  | E_exec(e1,e2,_k) ->
+  | E_exec(e1,e2,eo,_k) ->
       (* _k is in a different name space than variables *)
-      aux xs e1 ++ aux xs e2
+      aux xs e1 ++ aux xs e2 ++ (match eo with 
+                                 | None -> SMap.empty 
+                                 | Some e3 -> aux xs e3)
   | E_ref(e1) ->
       aux xs e1
   | E_get(e1) ->
