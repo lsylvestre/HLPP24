@@ -3,13 +3,15 @@
 
 type token = 
   | XOR
+  | WITH_SIZES
   | WITH
   | WHEN
+  | VECT_CREATE
   | VECTOR_MAPI
-  | VECTOR_CREATE
   | UP_IDENT of (string)
   | UNROLL
   | TYPE
+  | TYB_VAR_IDENT of (string)
   | TVAR_IDENT of (string)
   | TUPLE_UPDATE
   | TUPLE_OF_INT
@@ -17,13 +19,16 @@ type token =
   | TO
   | TIMES
   | THEN
+  | SYM of (string)
   | STRING_LIT of (string)
   | STATIC
   | SIZE_CREATE
   | SHARP_PIPE_LBRACKET
+  | SHARED
   | SET
   | SEMI_SEMI
   | SEMI
+  | RUN
   | RPAREN
   | RIGHT_ARROW
   | RESIZE_INT
@@ -31,8 +36,10 @@ type token =
   | REGISTER
   | REF
   | REC
+  | RCUR
   | RBRACKET
   | QUOTE
+  | QUESTION_MARK
   | PLUS
   | PIPE_RBRACKET
   | PIPE_PIPE
@@ -40,6 +47,8 @@ type token =
   | PIPE
   | PARFOR
   | OR
+  | OPERATOR_IDENT of (string)
+  | OPERATOR
   | OF
   | NOT
   | NODE
@@ -59,16 +68,18 @@ type token =
   | LENGTH
   | LEFT_ARROW
   | LE
+  | LCUR
   | LBRACKET_PIPE
   | LBRACKET
-  | LAST
   | LAND
   | INT_OF_TUPLE
   | INT_MAPI
   | INT_LIT of (int)
   | INIT_TUPLE
   | INIT_INT
+  | INIT
   | IN
+  | IMPURE
   | IMPLY
   | IMMEDIATE
   | IF
@@ -80,6 +91,7 @@ type token =
   | FUN
   | FOR
   | FIX
+  | EXTERNAL
   | EXIT_REPL
   | EXEC
   | EQ_EQ
@@ -102,8 +114,10 @@ type token =
   | AT_AT
   | AT
   | ASR
+  | ARRAY_MAKE
   | ARRAY_LENGTH
   | ARRAY_CREATE
+  | ARRAY
   | AND
   | AMP_AMP
   | AMP
@@ -114,9 +128,9 @@ exception Error
 
 (* The monolithic API. *)
 
-val pi: (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ((Ast.x * Ast.static) list * (Ast.x * (Ast.x * Types.sz) list) list *
+val pi: (Lexing.lexbuf -> token) -> Lexing.lexbuf -> (((Ast.x * (Types.ty * bool)) list *
+   (Ast.x * (Types.ty * (bool * int * bool))) list) *
+  (Ast.x * Ast.static) list * (Ast.x * (Ast.x * Types.tyB) list) list *
   ((Ast.p * Ast.e_static) * Prelude.loc) list)
 
 val exp_eof: (Lexing.lexbuf -> token) -> Lexing.lexbuf -> (Ast.e_static)
-
-val decl_opt: (Lexing.lexbuf -> token) -> Lexing.lexbuf -> (((Ast.p * Ast.e_static) * Prelude.loc) option)

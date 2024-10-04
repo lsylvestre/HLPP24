@@ -1,6 +1,6 @@
 ## Game of Life, v2
 
-*The world is represented by an immutable vector of booleans (i.e., a large immediate value).*
+*The world is represented by an immutable vector of booleans.*
 
 ### Measure execution time
 
@@ -12,7 +12,7 @@ $ ./eclat -relax ../benchs/game-of-life/v2/v2.ecl  -main=chrono_main
 vhdl code generated in ../target/main.vhdl 
 testbench generated in ../target/tb_main.vhdl for software RTL simulation using GHDL.
 
-$ make simul NS=400
+$ make simul NS=400 NAME=chrono_main
 cd ../target; make NS=400
 ghdl -a  runtime.vhdl
 ghdl -a  main.vhdl
@@ -30,7 +30,7 @@ execution time = 4 cycles
 
 ```
 $ ./eclat -relax ../benchs/game-of-life/v2/v2.ecl  -main=test_main
-$ make simul NS=4000000
+$ make simul NS=4000000 NAME=test_main
 cd ../target; make NS=4000000
 ghdl -a  runtime.vhdl
 ghdl -a  main.vhdl

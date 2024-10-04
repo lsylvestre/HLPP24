@@ -1,4 +1,4 @@
-let semi_pipe(f,(rI,src),(rO,dst)) =
+let pipe_worker(f,(rI,src),(rO,dst)) =
   let rec loop(i) =
     if i < length src then
     (let j = get(rI,0) 
@@ -20,7 +20,7 @@ let pipe1 ((f,src),k) =
   let rdy1 = create 1 in
   let () = set(rdy0,0,(length src))
   and () = set(rdy1,0,0) in
-  let () = semi_pipe(f,(rdy0,src),(rdy1,tmp1))
+  let () = pipe_worker(f,(rdy0,src),(rdy1,tmp1))
   in k(tmp1)
 ;;
 
@@ -31,8 +31,8 @@ let pipe2 ((f1,f2,src),k) =
   let () = set(rdy0,0,(length src))
   and () = set(rdy1,0,0)
   and () = set(rdy2,0,0) in
-  let () = semi_pipe(f1,(rdy0,src),(rdy1,tmp1))
-  and () = semi_pipe(f2,(rdy1,tmp1),(rdy2,tmp2))
+  let () = pipe_worker(f1,(rdy0,src),(rdy1,tmp1))
+  and () = pipe_worker(f2,(rdy1,tmp1),(rdy2,tmp2))
   in k(tmp2)
 ;;
 
@@ -45,9 +45,9 @@ let pipe3 ((f1,f2,f3,src),k) =
   and () = set(rdy1,0,0)
   and () = set(rdy2,0,0)
   and () = set(rdy3,0,0) in
-  let () = semi_pipe(f1,(rdy0,src),(rdy1,tmp1))
-  and () = semi_pipe(f2,(rdy1,tmp1),(rdy2,tmp2))
-  and () = semi_pipe(f3,(rdy2,tmp2),(rdy3,tmp3))
+  let () = pipe_worker(f1,(rdy0,src),(rdy1,tmp1))
+  and () = pipe_worker(f2,(rdy1,tmp1),(rdy2,tmp2))
+  and () = pipe_worker(f3,(rdy2,tmp2),(rdy3,tmp3))
   in k(tmp3)
 ;;
 
@@ -62,10 +62,10 @@ let pipe4 ((f1,f2,f3,f4,src),k) =
   and () = set(rdy2,0,0)
   and () = set(rdy3,0,0)
   and () = set(rdy4,0,0) in
-  let () = semi_pipe(f1,(rdy0,src),(rdy1,tmp1))
-  and () = semi_pipe(f2,(rdy1,tmp1),(rdy2,tmp2))
-  and () = semi_pipe(f3,(rdy2,tmp2),(rdy3,tmp3))
-  and () = semi_pipe(f4,(rdy3,tmp3),(rdy4,tmp4))
+  let () = pipe_worker(f1,(rdy0,src),(rdy1,tmp1))
+  and () = pipe_worker(f2,(rdy1,tmp1),(rdy2,tmp2))
+  and () = pipe_worker(f3,(rdy2,tmp2),(rdy3,tmp3))
+  and () = pipe_worker(f4,(rdy3,tmp3),(rdy4,tmp4))
   in k(tmp4);;
 
 let pipe5 ((f1,f2,f3,f4,f5,src),k) =
@@ -81,11 +81,11 @@ let pipe5 ((f1,f2,f3,f4,f5,src),k) =
   and () = set(rdy3,0,0)
   and () = set(rdy4,0,0)
   and () = set(rdy5,0,0) in
-  let () = semi_pipe(f1,(rdy0,src),(rdy1,tmp1))
-  and () = semi_pipe(f2,(rdy1,tmp1),(rdy2,tmp2))
-  and () = semi_pipe(f3,(rdy2,tmp2),(rdy3,tmp3))
-  and () = semi_pipe(f4,(rdy3,tmp3),(rdy4,tmp4))
-  and () = semi_pipe(f5,(rdy4,tmp4),(rdy5,tmp5))
+  let () = pipe_worker(f1,(rdy0,src),(rdy1,tmp1))
+  and () = pipe_worker(f2,(rdy1,tmp1),(rdy2,tmp2))
+  and () = pipe_worker(f3,(rdy2,tmp2),(rdy3,tmp3))
+  and () = pipe_worker(f4,(rdy3,tmp3),(rdy4,tmp4))
+  and () = pipe_worker(f5,(rdy4,tmp4),(rdy5,tmp5))
   in k(tmp5);;
 
 let pipe6 ((f1,f2,f3,f4,f5,f6,src),k) =
@@ -103,12 +103,12 @@ let pipe6 ((f1,f2,f3,f4,f5,f6,src),k) =
   and () = set(rdy4,0,0)
   and () = set(rdy5,0,0)
   and () = set(rdy6,0,0) in
-  let () = semi_pipe(f1,(rdy0,src),(rdy1,tmp1))
-  and () = semi_pipe(f2,(rdy1,tmp1),(rdy2,tmp2))
-  and () = semi_pipe(f3,(rdy2,tmp2),(rdy3,tmp3))
-  and () = semi_pipe(f4,(rdy3,tmp3),(rdy4,tmp4))
-  and () = semi_pipe(f5,(rdy4,tmp4),(rdy5,tmp5))
-  and () = semi_pipe(f6,(rdy5,tmp5),(rdy6,tmp6))
+  let () = pipe_worker(f1,(rdy0,src),(rdy1,tmp1))
+  and () = pipe_worker(f2,(rdy1,tmp1),(rdy2,tmp2))
+  and () = pipe_worker(f3,(rdy2,tmp2),(rdy3,tmp3))
+  and () = pipe_worker(f4,(rdy3,tmp3),(rdy4,tmp4))
+  and () = pipe_worker(f5,(rdy4,tmp4),(rdy5,tmp5))
+  and () = pipe_worker(f6,(rdy5,tmp5),(rdy6,tmp6))
   in k(tmp6);;
 
 let pipe7 ((f1,f2,f3,f4,f5,f6,f7,src),k) =
@@ -128,13 +128,13 @@ let pipe7 ((f1,f2,f3,f4,f5,f6,f7,src),k) =
   and () = set(rdy5,0,0)
   and () = set(rdy6,0,0) 
   and () = set(rdy7,0,0) in
-  let () = semi_pipe(f1,(rdy0,src),(rdy1,tmp1))
-  and () = semi_pipe(f2,(rdy1,tmp1),(rdy2,tmp2))
-  and () = semi_pipe(f3,(rdy2,tmp2),(rdy3,tmp3))
-  and () = semi_pipe(f4,(rdy3,tmp3),(rdy4,tmp4))
-  and () = semi_pipe(f5,(rdy4,tmp4),(rdy5,tmp5))
-  and () = semi_pipe(f6,(rdy5,tmp5),(rdy6,tmp6))
-  and () = semi_pipe(f7,(rdy6,tmp6),(rdy7,tmp7))
+  let () = pipe_worker(f1,(rdy0,src),(rdy1,tmp1))
+  and () = pipe_worker(f2,(rdy1,tmp1),(rdy2,tmp2))
+  and () = pipe_worker(f3,(rdy2,tmp2),(rdy3,tmp3))
+  and () = pipe_worker(f4,(rdy3,tmp3),(rdy4,tmp4))
+  and () = pipe_worker(f5,(rdy4,tmp4),(rdy5,tmp5))
+  and () = pipe_worker(f6,(rdy5,tmp5),(rdy6,tmp6))
+  and () = pipe_worker(f7,(rdy6,tmp6),(rdy7,tmp7))
   in k(tmp7);;
 
 let pipe8 ((f1,f2,f3,f4,f5,f6,f7,f8,src),k) =
@@ -156,14 +156,14 @@ let pipe8 ((f1,f2,f3,f4,f5,f6,f7,f8,src),k) =
   and () = set(rdy6,0,0) 
   and () = set(rdy7,0,0) 
   and () = set(rdy8,0,0) in
-  let () = semi_pipe(f1,(rdy0,src),(rdy1,tmp1))
-  and () = semi_pipe(f2,(rdy1,tmp1),(rdy2,tmp2))
-  and () = semi_pipe(f3,(rdy2,tmp2),(rdy3,tmp3))
-  and () = semi_pipe(f4,(rdy3,tmp3),(rdy4,tmp4))
-  and () = semi_pipe(f5,(rdy4,tmp4),(rdy5,tmp5))
-  and () = semi_pipe(f6,(rdy5,tmp5),(rdy6,tmp6))
-  and () = semi_pipe(f7,(rdy6,tmp6),(rdy7,tmp7))
-  and () = semi_pipe(f8,(rdy7,tmp7),(rdy8,tmp8))
+  let () = pipe_worker(f1,(rdy0,src),(rdy1,tmp1))
+  and () = pipe_worker(f2,(rdy1,tmp1),(rdy2,tmp2))
+  and () = pipe_worker(f3,(rdy2,tmp2),(rdy3,tmp3))
+  and () = pipe_worker(f4,(rdy3,tmp3),(rdy4,tmp4))
+  and () = pipe_worker(f5,(rdy4,tmp4),(rdy5,tmp5))
+  and () = pipe_worker(f6,(rdy5,tmp5),(rdy6,tmp6))
+  and () = pipe_worker(f7,(rdy6,tmp6),(rdy7,tmp7))
+  and () = pipe_worker(f8,(rdy7,tmp7),(rdy8,tmp8))
   in k(tmp8)
 ;;
 
@@ -188,15 +188,15 @@ let pipe9 ((f1,f2,f3,f4,f5,f6,f7,f8,f9,src),k) =
   and () = set(rdy7,0,0) 
   and () = set(rdy8,0,0) 
   and () = set(rdy9,0,0) in
-  let () = semi_pipe(f1,(rdy0,src),(rdy1,tmp1))
-  and () = semi_pipe(f2,(rdy1,tmp1),(rdy2,tmp2))
-  and () = semi_pipe(f3,(rdy2,tmp2),(rdy3,tmp3))
-  and () = semi_pipe(f4,(rdy3,tmp3),(rdy4,tmp4))
-  and () = semi_pipe(f5,(rdy4,tmp4),(rdy5,tmp5))
-  and () = semi_pipe(f6,(rdy5,tmp5),(rdy6,tmp6))
-  and () = semi_pipe(f7,(rdy6,tmp6),(rdy7,tmp7))
-  and () = semi_pipe(f8,(rdy7,tmp7),(rdy8,tmp8))
-  and () = semi_pipe(f9,(rdy8,tmp8),(rdy9,tmp9))
+  let () = pipe_worker(f1,(rdy0,src),(rdy1,tmp1))
+  and () = pipe_worker(f2,(rdy1,tmp1),(rdy2,tmp2))
+  and () = pipe_worker(f3,(rdy2,tmp2),(rdy3,tmp3))
+  and () = pipe_worker(f4,(rdy3,tmp3),(rdy4,tmp4))
+  and () = pipe_worker(f5,(rdy4,tmp4),(rdy5,tmp5))
+  and () = pipe_worker(f6,(rdy5,tmp5),(rdy6,tmp6))
+  and () = pipe_worker(f7,(rdy6,tmp6),(rdy7,tmp7))
+  and () = pipe_worker(f8,(rdy7,tmp7),(rdy8,tmp8))
+  and () = pipe_worker(f9,(rdy8,tmp8),(rdy9,tmp9))
   in k(tmp9)
 ;;
 

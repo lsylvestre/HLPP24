@@ -8,20 +8,20 @@ let reduce_worker (f,r,v0,src) =
   in loop(v0);;
 
 let reduce_par1(f,v0,src) =
-  let r = create 1 in
+  let r = create<1>() in
   set(r,0,0);
   let x1 = reduce_worker(f,r,v0,src) in
   x1 ;;
 
 let reduce_par2(f,v0,src) =
-  let r = create 1 in
+  let r = create<1>() in
   set(r,0,0);
   let x1 = reduce_worker(f,r,v0,src)
   and x2 = reduce_worker(f,r,v0,src) in
   f(x1,x2) ;;
 
 let reduce_par3(f,v0,src) =
-  let r = create 1 in
+  let r = create<1>() in
   set(r,0,0);
   let x1 = reduce_worker(f,r,v0,src)
   and x2 = reduce_worker(f,r,v0,src)
@@ -29,7 +29,7 @@ let reduce_par3(f,v0,src) =
   f(x1,f(x2,x3)) ;;
 
 let reduce_par4(f,v0,src) =
-  let r = create 1 in
+  let r = create<1>() in
   set(r,0,0);
   let x1 = reduce_worker(f,r,v0,src)
   and x2 = reduce_worker(f,r,v0,src)
@@ -38,7 +38,7 @@ let reduce_par4(f,v0,src) =
   f(x1,f(x2,f(x3,x4))) ;;
 
 let reduce_par5(f,v0,src) =
-  let r = create 1 in
+  let r = create<1>() in
   set(r,0,0);
   let x1 = reduce_worker(f,r,v0,src)
   and x2 = reduce_worker(f,r,v0,src)
@@ -48,7 +48,7 @@ let reduce_par5(f,v0,src) =
   f(x1,f(x2,f(x3,f(x4,x5)))) ;;
 
 let reduce_par6(f,v0,src) =
-  let r = create 1 in
+  let r = create<1>() in
   set(r,0,0);
   let x1 = reduce_worker(f,r,v0,src)
   and x2 = reduce_worker(f,r,v0,src)
@@ -59,7 +59,7 @@ let reduce_par6(f,v0,src) =
   f(x1,f(x2,f(x3,f(x4,f(x5,x6))))) ;;
 
 let reduce_par7(f,v0,src) =
-  let r = create 1 in
+  let r = create<1>() in
   set(r,0,0);
   let x1 = reduce_worker(f,r,v0,src)
   and x2 = reduce_worker(f,r,v0,src)
@@ -72,7 +72,7 @@ let reduce_par7(f,v0,src) =
 
 
 let reduce_par8(f,v0,src) =
-  let r = create 1 in
+  let r = create<1>() in
   set(r,0,0);
   let x1 = reduce_worker(f,r,v0,src)
   and x2 = reduce_worker(f,r,v0,src)
@@ -108,17 +108,16 @@ let counter () =
 let init_array a =
  for i = 0 to length(a)-1 do set(a,i,i+1) done ;;
 
-let main () =
+let main (_:int<12>) : int<58> =
   let cy = counter () in
-  let (_,rdy) = 
+  let (o,rdy) = 
     exec
-      let a = array_create (1000) in
-      (* init_array(a);*)
-      (let v = reduce_par8(f,0,a) in 
-       (* print_int v; *)
-       ())
-    default ()
+      let a = create<4096>() in
+      init_array(a);
+      (let v = reduce_par8((+),0,a) in 
+        v)
+    default 0
   in
-  if rdy then (print_string " cy="; 
+  (if rdy then (print_string " cy="; 
                print_int (cy); 
-               print_newline()) ;;
+               print_newline()) else ()); o ;;

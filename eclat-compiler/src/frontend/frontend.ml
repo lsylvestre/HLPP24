@@ -6,30 +6,39 @@ let read_phrase () =
   let rec loop acc =
     let s = read_line () in
     let new_acc = acc^"\n"^s in (* todo (improvment): use a buffer to avoid multiple concatenation *)
-    if String.contains s '.' then new_acc else
-    match String.index_opt s ';' with
+    if String.contains s '.' 
+    then new_acc 
+    else
+    (* since the "end of phrase" marker is ";;", we detect the last occurring ';'
+       of each line and we test if the previous caracter is also a ';' *) 
+    match String.rindex_opt s ';' with
     | None -> loop new_acc
     | Some n ->
-        if n < String.length s && s.[n] = ';' then new_acc else
-        loop new_acc
+       if n < String.length s && s.[n-1] = ';' then new_acc else
+       loop new_acc
   in loop ""
+  (* todo: accept comments in the input *)
 
 let syntax_error_handler f lexbuf =
     try f(lexbuf)
     with Parser.Error -> 
            Prelude.Errors.syntax_error (Lexer.get_loc lexbuf)
 
-let frontend ~(inputs : string list) repl ?(when_repl=(fun _ -> ())) ?(relax=false) main str_arg : pi * e list =
-  let gss_from_files,tss_from_files,dss_from_files =
-    Prelude.map_split3 (fun path ->
+let frontend ~(inputs : string list) repl ?(when_repl=(fun _ _ _ _ _ -> ())) 
+             ?(relax=false) main str_arg : pi * e list =
+  let (ess_from_files, 
+       gss_from_files, 
+       tss_from_files, 
+       dss_from_files) =
+    Prelude.map_split4 (fun path ->
                 let ic = open_in path in
                 begin try
                       Current_filename.current_file_name := path;
                       let lexbuf = Lexing.from_channel ic in
                       syntax_error_handler (fun lexbuf ->
-                      let gs,ts,ds = Parser.pi Lexer.token lexbuf in
+                      let exts,gs,ts,ds = Parser.pi Lexer.token lexbuf in
                       close_in ic;
-                      gs,ts,ds) lexbuf
+                      exts,gs,ts,ds) lexbuf
                     with excp ->
                       close_in_noerr ic;
                       (match excp with
@@ -40,36 +49,54 @@ let frontend ~(inputs : string list) repl ?(when_repl=(fun _ -> ())) ?(relax=fal
                       raise excp 
                 end
                ) inputs in
-  let gs_from_files,ts_from_files, ds_from_files =
-    List.concat gss_from_files, List.concat tss_from_files, List.concat dss_from_files in
-  let ds = (if repl || ds_from_files = [] then
-            let () = List.iter when_repl ds_from_files in
+  let (exts_from_files,
+       gs_from_files,
+       ts_from_files,
+       ds_from_files) = let e1, e2 = List.split ess_from_files in
+                        (List.concat e1,List.concat e2), 
+                         List.concat gss_from_files, 
+                         List.concat tss_from_files, 
+                         List.concat dss_from_files 
+  in
+  let (exts, gs, ts, ds) = 
+         (if repl || List.length inputs < 2 then
+            (* let () = List.iter (when_repl ([],[]) [] []) ds_from_files in *)
             (Current_filename.current_file_name := "%stdin";
-             Printf.printf "=== eclat (experimental toploop, do not support type declaration) ===.\nEnter phrases (separated by ';;') then compile (or run) with ``#exit.''\n";
+             Printf.printf "=== eclat toploop ===.\nEnter phrases (separated by ';;') then compile (or run) with ``#q.''\n";
              flush stdout;
-             let rec loop ds =
+             let rec loop (exts1,exts2) gs ts ds =
                Printf.printf "\n> ";
                let l = read_phrase () in
-               if String.contains l '#' then ds else
+               if String.contains l '#' then 
+                 (if List.exists (fun ((p,_),_) -> SMap.mem main @@ vars_of_p p) ds then (exts1,exts2),gs,ts,ds else
+                    (Format.fprintf Format.std_formatter "entry point *%s* not set\n" main;
+                     Format.print_flush ();
+                     loop (exts1,exts2) gs ts ds))
+               else
                try
                  (let lexbuf = (Lexing.from_string l) in
-                  syntax_error_handler (fun lexbuf ->
-                  match Parser.decl_opt Lexer.token lexbuf with
-                 | Some d -> begin
-                    caml_error_handler ~on_error:(fun _ ->
+                  let (exts1',exts2'),gs',ts',ds' = Parser.pi Lexer.token lexbuf in
+                  caml_error_handler ~on_error:(fun _ ->
                       Format.print_flush ();
-                      let () = List.iter when_repl (List.rev ds) in
-                      (* todo: reset when_repl and retype all previous declaration, ignoring the last (eronous) one *)
-                      loop ds
-                    )
-                    (fun () -> when_repl d; loop (d::ds)) ()
-                  end
-                 | None -> loop ds) lexbuf)
-                with End_of_file -> ds
-            in
-             loop (List.rev ds_from_files))
-             |> List.rev
-            else ds_from_files) in
+                      let () = List.iter (when_repl (exts1,exts2) gs ts false) ds in
+                      loop (exts1,exts2) gs ts ds)
+                  (fun () -> let exts1'' = exts1@exts1' in
+                             let exts2'' = exts2@exts2' in
+                             let gs'' = gs@gs' in
+                             let ts'' = ts@ts' in
+                             let ds'' = ds@ds' in
+                       let w = (when_repl (exts1'', exts2'') gs'' ts'') in
+                       List.iter (w false) ds;
+                       List.iter (w true) ds'; 
+                       loop (exts1'', exts2'') gs'' ts'' ds'')
+                  ())
+                with End_of_file -> (exts1,exts2),gs,ts,ds
+             in
+             loop ((fun (ext1,ext2) -> List.rev ext1, List.rev ext2) exts_from_files)
+                  (List.rev @@ gs_from_files) 
+                  (List.rev @@ ts_from_files) 
+                  (ds_from_files))
+        else exts_from_files,gs_from_files,ts_from_files,ds_from_files) in
 
   let values_list =
 
@@ -90,7 +117,8 @@ let frontend ~(inputs : string list) repl ?(when_repl=(fun _ -> ())) ?(relax=fal
                            error ~loc (fun fmt ->
                                   Format.fprintf fmt
                                     "@[<v>This global pattern does not match statically the right-hand side.@]")) ds in
-  let main = List.fold_right (fun (x,v) e -> E_letIn(P_var x,v,e)) ds (let y = gensym () in E_fun (P_var y, E_app(entry_point,E_var y))) in
+  let main = List.fold_right (fun (x,v) e -> E_letIn(P_var x,Types.new_ty_unknown(),v,e)) ds (let y = gensym () in 
+      E_fun (P_var y,(Types.new_ty_unknown(),Types.new_tyB_unknown()), E_app(entry_point,E_var y))) in
 
 
   (*
@@ -105,8 +133,6 @@ let frontend ~(inputs : string list) repl ?(when_repl=(fun _ -> ())) ?(relax=fal
 
   *)
 
-
   (* return both parsed program and its inputs *)
-
-  ({statics=gs_from_files;sums=ts_from_files;main}, values_list)
+  ({statics=gs_from_files;externals=exts;sums=ts_from_files;main}, values_list)
 

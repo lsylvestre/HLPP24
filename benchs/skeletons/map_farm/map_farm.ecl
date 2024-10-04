@@ -1,13 +1,6 @@
-(* parallel implementation of map using a worker farm *)
-
-(* 
-     $ ./eclat ../benchs/skeletons/map_farm/map_farm.ecl
-     $ make simul NS=400000
-*)
-
 let map_worker (f,r,src,dst) =
   let rec loop() =
-    let i = get(r,0) in
+    let i = get(r,0) in    
     if i < length src then (
       let ((),v) = (set(r,0,i+1) ||
                     get(src,i)) in
@@ -16,13 +9,13 @@ let map_worker (f,r,src,dst) =
     else ()
   in loop();;
 
-let map_farm((n,f,src),k) =
-  let dst = create (length src) in
-  let r = array_create 1 in
+let map_farm ((( p, f, src), k) : (('A * 'B * array<'N>) * 'D)) : 'E = 
+  let dst = create<'N> () in
+  let r = create<1> () in
   set(r,0,0);
-  macro_for i = 1 to n do 
+  parfor i = 0 to p - 1 do
     map_worker(f,r,src,dst)
-  done; 
+  done;
   k(dst) ;;
 
 (* *********************** *)
@@ -53,11 +46,11 @@ let main () =
   let cy = counter () in
   let (_,rdy) = 
     exec
-      let a = array_create (1024) in
+      let a = create<100> () in
 
       init_array(a); (* note: initialization takes time *)
-
-      let p = 16 (* degree of parallelism *)
+    
+      let p = 2 (* degree of parallelism *)
       in 
       (map_farm(p,collatz,a) @@ fun t -> ()) 
   default () in

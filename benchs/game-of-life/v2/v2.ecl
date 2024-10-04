@@ -1,25 +1,37 @@
-(** Conway's Game Of Life, version 2 *)
+let read_cell(src, i, j) =
+  let v = vect_nth(src, i) in
+  let x = vect_nth(v,j) in
+  x ;;
+
+let cell_copy_with(src, i, j,y) =
+  let v = vect_nth(src, i) in
+  let v2 = vect_copy_with(v,j,y) in
+  let x = vect_copy_with(src,i,v2) in
+  x ;;
 
 
-let sum_neighborhood(f,i,n) =
-  f(i-n-1) + f(i-n) + f(i-n+1) + 
-  f(i-1)            + f(i+1) +
-  f(i+n-1) + f(i+n) + f(i+n+1) ;;
-  
-let next_cell(get_cell,w,i,cell,n) =
-  let alive_int(i) = 
-    if get_cell(w,i) then 1 else 0 in
-  let s : int<4> = sum_neighborhood(alive_int,i,n)
-  in (cell & s = 2) or (s = 3) ;;
+let border(i,nb) =
+  if i = (-1) then nb - 1 else
+  if i = nb then 0 else i ;;
 
-let pos_modulo(i,n,size) =
-  if i < 0 then i+size else
-  if i >= size then i-size else i ;;
+let alive(g,i,j,nbc,nbl) = 
+  let cell : bool = read_cell(g, border(i,nbc), border(j,nbl)) in
+  if cell then 1 else 0 ;;
 
-let vect_life (world,n) =
-  let access(w,i) = vect_nth(w,pos_modulo(i,n,vect_size w)) in  
-  let f (i,cell) = next_cell(access,world,i,cell,n) in
-  vect_mapi(f,world) ;;
+let sum_neighborhood(g,i,j,nbc,nbl) =
+  alive(g,i-1,j-1,nbc,nbl) + alive(g,i,j-1,nbc,nbl) + alive(g,i+1,j-1,nbc,nbl) +
+  alive(g,i-1,j,nbc,nbl)   +                          alive(g,i+1,j,nbc,nbl) +
+  alive(g,i-1,j+1,nbc,nbl) + alive(g,i,j+1,nbc,nbl) + alive(g,i+1,j+1,nbc,nbl) ;;
+
+let vect_life (grid,nbc,nbl) =
+  let next_line(i,line) = 
+    let next_cell(j,cell) = 
+      let sum : int<4> = sum_neighborhood(grid,i,j,nbc,nbl) in
+      let new_cell = (cell & sum = 2) or (sum = 3) in
+      new_cell
+    in
+    vect_mapi(next_cell,line) in
+  vect_mapi(next_line,grid) ;;
 
 
 (** ==== measure execution time ==== *)
@@ -29,16 +41,16 @@ let counter () =
 
 (**
    $ ./eclat ../benchs/game-of-life/v2/v2.ecl  -main=chrono_main
-   $ make simul
+   $ make simul NAME=chrono_main
      ~> execution time = 1 cycles
 *)
 let chrono_main () =
   let cy = counter () in
   let ((),rdy) =
     exec
-      let n = 64 in
-      let w = vect_create(1024,false) in
-      let _ = vect_life(w,n) in
+      let a = vect_create<64>(false) in
+      let w = vect_create<64>(a) in
+      let _ = vect_life(w,64,64) in
       ()
     default ()
   in
@@ -49,42 +61,38 @@ let chrono_main () =
 
 (** ==== display successive generations of the world ==== *)
 
-let print_world (world,n) : unit =
-  for i = 0 to n*n - 1 do
-    if (i mod n) = 0 then print_newline () else ();
-    print_string (if vect_nth(world,i) then "*" else "-")
-  done;
-  print_newline ();
+let print_world (world,nbc,nbl) : unit =
+  let _ = vect_mapi ((fun (_,line) ->
+     let _ = vect_mapi ((fun (_,cell) ->
+       print_string (if cell then "*" else "-")),line) in
+       print_newline ()),world) in
   print_string "==============";
   print_newline () ;;
+
 
 (** 
     $ ./eclat -relax ../benchs/game-of-life/v2/v2.ecl  -main=test_main
  *)
 let test_main () =
-  let n = 8 in
-  let w = vect_make(size_create 64,false) in
+  let a = vect_create<10>(false) in
+  let w0 = vect_create<10>(a) in
+  let w0 = cell_copy_with(w0,0,0,true) in
+  let w0 = cell_copy_with(w0,0,2,true) in
+  let w0 = cell_copy_with(w0,1,1,true) in
+  let w0 = cell_copy_with(w0,1,2,true) in
+  let w0 = cell_copy_with(w0,2,1,true) in
+  let w1 = reg (fun w -> vect_life(w,10,10)) init w0 in
+  print_world(w1,10,10);
 
-  let f = (fun (i,_) ->
+  (*let f = (fun (i,_) ->
     i = 0 or 
     i = 2 or 
     i = (n+1) or
     i = (n+2) or 
-    i = (n+n+1))
-  in
+    i = (n+n+1))  *)
 
-  let w = vect_mapi(f,w) in
+  if vect_nth(vect_nth(w1,0),0) then 0 else 1 ;;
 
-  let rec loop(i,w) =
-    if i < 1 then w else (
-      print_world(w,n);
-      let next_w = vect_life(w,n) in
-      loop(i-1,next_w)
-    )
-  in 
-  let w_end = loop(2000,w) in
-
-  if vect_nth(w_end,0) then 0 else 1 ;;
 
 (** ==== synthesis ==== *)
 

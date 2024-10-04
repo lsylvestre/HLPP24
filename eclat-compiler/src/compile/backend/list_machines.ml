@@ -16,21 +16,21 @@ let rec list_machines_s s =
   | S_letIn(x,a,s) ->
       S_letIn(x,a,list_machines_s s)
   | S_set _ -> s
-  | S_setptr_read _ | S_setptr_write _ 
-  | S_setptr_matrix_read _ | S_setptr_matrix_write _ 
-  | S_ptr_take _ | S_ptr_write_take _ -> s
-  | S_buffer_set _ -> s
+  | S_acquire_lock _ | S_release_lock _
+  | S_read_start _ | S_read_stop _ 
+  | S_write_start _  | S_write_stop _ -> s
   | S_seq(s1,s2) ->
       seq_ (list_machines_s s1)
            (list_machines_s s2)
-  | S_fsm(id,rdy,result2,compute,ts,s,b) ->
+  | S_fsm(id,rdy,result2,compute,ts,s) ->
       let sv = Ast.gensym ~prefix:"state_var" () in
-      (* todo: when b is true, we should remove the [compute] state (dead code) *)
       extra_machines := (id,(sv,compute,List.map fst ts)) :: !extra_machines;
       let ts,s = list_machines (ts,s) in
-      S_fsm(id,rdy,result2,compute,ts,s,b)
+      S_fsm(id,rdy,result2,compute,ts,s)
   | S_in_fsm(id,s) -> S_in_fsm(id,list_machines_s s)
   | S_call _ -> s
+  | S_external_run _ -> s
+
 
 and list_machines (ts,s) =
  let f s = list_machines_s s in

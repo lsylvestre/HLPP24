@@ -1,9 +1,10 @@
 -- code generated from the following source code:
---   
+--   stdlib.ecl
+--   ../benchs/queens/nqueens.ecl
 --
 -- with the following command:
 --
---    ./eclat
+--    ./eclat ../benchs/queens/nqueens.ecl
 
 
 library ieee;
@@ -21,15 +22,12 @@ architecture tb of tb_main is
     port(
       signal clk    : in std_logic;
       signal reset  : in std_logic;
-      signal run    : in std_logic;
-      signal rdy    : out value(0 to 0);
-      signal argument : in value(0 to 0);
-      signal result : out value(0 to 32));
+      signal argument : in value(0 to 11);
+      signal result : out value(0 to 57));
 end component;
-  signal tb_run: std_logic;
-  signal tb_argument: std_logic_vector(0 to 0);
-  signal tb_result: std_logic_vector(0 to 32);
-  signal tb_rdy: value(0 to 0);
+  signal tb_argument: std_logic_vector(0 to 11) := (others => '0');
+  signal tb_result: std_logic_vector(0 to 57);
+  signal tb_next_result: std_logic_vector(0 to 57);
   signal tb_clk: std_logic;
   signal rst: std_logic;
   begin
@@ -51,13 +49,21 @@ end component;
     wait for 5 ns;
   end process;
 
-  U1: main port map(tb_clk,rst,tb_run,tb_rdy,tb_argument,tb_result);
+  U1: main port map(tb_clk,rst,tb_argument,tb_result);
+      process (RST,tb_clk) 
+      begin
+        if RST = '1' then
+         -- tb_result <= (others => '0');
+        elsif (rising_edge(tb_clk)) then
+         -- tb_result <= tb_next_result;   -- resynchronize output
+        end if;
+      end process;
+
   process
   begin
-    tb_run <= '0';
-    wait for 10 ns;
-    tb_run <= '1';
+
       -- Start computation
+    wait for 5 ns;
 
     wait;
   end process;

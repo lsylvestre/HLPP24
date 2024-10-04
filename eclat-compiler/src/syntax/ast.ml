@@ -9,7 +9,7 @@ type l = string         (** location (i.e., pointer) [l] *)
 type c =                (** constant [c] *)
   | Unit                (** unit value [()] *)
   | Bool of bool        (** boolean [true | false] *)
-  | Int of int * ty     (** integer literal [n] of given size *)
+  | Int of int * size  (** integer literal [n] of given size *)
   | String of string    (** string literal [s] *)
   | Op of op            (** primitive [op] *)
   | V_loc of l          (** pointer [l], only in the semantics, 
@@ -17,7 +17,8 @@ type c =                (** constant [c] *)
   | C_tuple of c list   (** tuple literal  [(e1, .. en)]    *)
   | C_vector of c list  (** vector literal [{ e1, ... en }] *)
   | C_size of int       (** integer constant used only at compile time *)
-  | Inj of x            (* constructor (data type) *)
+  | Inj of x            (* non-applyed constructor (data type) *)
+  | C_appInj of x * c * tyB (* constructor (data type) *)
 
 and op = (** primitives *)
        (* instantaneous primitives *)
@@ -40,52 +41,50 @@ type e =                      (** expression     [e]                       *)
   | E_var of x                (** variable       [x,y,f,g ...]             *)
   | E_app of e * e            (** application    [e1 e2]                   *)
   | E_tuple of e list         (** tuple          [e1, ... en]              *)
-  | E_letIn of p * e * e      (** let-bindings   [let p = e1 in e2]        *)
+  | E_letIn of p * ty * e * e (** let-bindings   [let p = e1 in e2]        *)
   | E_if of e * e * e         (** conditional    [if e1 then e2 else e3]   *)
-  | E_case of e * (c * e) list * e (** switch/case    [match e with | c -> e | ... | _ -> e] *)
+  | E_case of e * (c list * e) list * e (** switch/case    [match e with | c -> e | ... | _ -> e] *)
   | E_match of e * (x * (p * e)) list * e option (* sum type projection [match e with inj1 p1 -> e1 | ... ] *)
-  | E_fun of p * e            (** function       [fun p -> e]              *)
-  | E_fix of x * (p * e)      (** recursive function [fix (fun p -> e)]    *)
-  | E_par of e list           (** parallel tuple             [(e1 || e2 ... en)] *)
+  | E_fun of p * (ty * tyB) * e       (** function       [fun p -> e]              *)
+  | E_fix of x * (p * (ty * tyB) * e) (** recursive function [fix (fun p -> e)]    *)
+  | E_par of e list                   (** parallel tuple             [(e1 || e2 ... en)] *)
 
-  | E_reg of (p * e) * e * l  (** register       [reg^l (fun p -> e) last e] *)
+  | E_reg of (p * tyB * e) * e * l  (** register       [reg^l (fun p -> e) last e] *)
   | E_exec of e * e * e option * l   (** exec           [(exec^l e default e [reset when e])]    *)
 
-  | E_local_static_array of e * deco (* [array_crate n], should be resolved at compile time *)
+  | E_array_create of size * deco   (** [create<sz>] *)
+  | E_array_make of size * e * deco (** [make<sz> e] *)
   | E_array_get of x * e      (** static array access        [x.(e)]      *)
   | E_array_length of x       (** static array length access [x.length]   *)
   | E_array_set of x * e * e  (** static array assignment    [x.(e) <- e] *)
-  | E_local_static_matrix of e * e list * deco (* c^n^ ... n, should be resolved at compile time *)
-  | E_matrix_get of x * e list (** static matrix access       [x.(e).(e). ...]  *)
-  | E_matrix_size of x * int   (** static matrix size         [x.(n).size]     *)
-  | E_matrix_set of x * e list * e (** static matrix assignment   [x.(e).(e) ... <- e]  *)
 
   | E_ref of e
   | E_get of e 
   | E_set of e * e
 
   | E_vector of e list
-  | E_vector_mapi of bool * (p * e) * e * ty
-  | E_int_mapi of bool * (p * e) * e * ty
+  | E_vector_mapi of bool * (p * (tyB * tyB) * e) * e * size
 
-  | E_generate of (p * e) * e * e_static * deco
+  | E_generate of (p * (ty * tyB) * e) * e * e_static * deco
   | E_for of x * e_static * e_static * e * deco
+
+  | E_run of x * e (* call external code *)
 
 and e_static = e
 
-type static =                       (* static toplevel data *)
-  | Static_array_of of (ty * deco)  (** [let static x : ty array<n> ;;] *)
-  | Static_array of c * int         (** static global array [c^n] *)
-  | Static_matrix of c * int list   (** static global array [c^n^...] *)
+type static =                         (** static toplevel data *)
+  | Static_array_of of (ty * deco) (** [let static x : ty array<n> ;;] *)
+  | Static_array of c * int           (** static global array [c^n] *)
   | Static_const of c
 
 (** each program is a sequence of toplevel definitions (static arrays
     and functions) coupled with an entry point, e.g. the variable [main]
     referting to one of those definitions *)
 type pi = {
-  statics : (x * static) list ;     (** static global arrays *)
-  sums : (x * (x * ty) list) list ; (** sum types *)
-  main : e                          (** body *)
+  statics : (x * static) list ;         (** static global arrays *)
+ externals : (x * (ty * bool)) list * (x * (ty * (bool * int * bool))) list ; (* circuits - functions *)
+  sums : (x * (x * tyB) list) list ;    (** sum types *)
+  main : e                              (** body *)
 }
 
 
@@ -106,9 +105,16 @@ let group_es (es:e list) : e =
 (** [group_ts ts] builds a type from a list of types *)
 let group_ts (ts:ty list) : ty =
   match ts with
-  | [] -> T_const TUnit
+  | [] -> Ty_base TyB_unit
   | [t] -> t
-  | ts -> T_tuple ts
+  | _ -> Ty_tuple ts
+
+let group_tyBs (tyBs:tyB list) : tyB =
+  match tyBs with
+  | [] -> TyB_unit
+  | [t] -> t
+  | _ -> TyB_tuple tyBs
+
 
 (** symbol generator *)
 
@@ -220,5 +226,14 @@ let rec e2c e =
   | E_tuple es -> C_tuple (List.map e2c es)
   | E_app(e1,e2) -> (match e2c e1 with
                      | Op(TyConstr _) -> e2c e2  (* todo : warning ? lost of precision *)
+                     | Inj(x) -> C_appInj(x,e2c e2,Types.new_tyB_unknown())
                      | _ -> raise Not_a_constant)
   | _ -> raise Not_a_constant
+
+
+
+
+let typ_decl_abstract : (string, string * Types.size list * int list) Hashtbl.t 
+  = Hashtbl.create 10
+
+

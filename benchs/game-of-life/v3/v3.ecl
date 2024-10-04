@@ -1,48 +1,35 @@
-(** Conway's Game Of Life, version 3 *)
+let border(i,n) =
+  if i = (-1) then n - 1 else
+  if i = n then 0 else i ;;
 
-(* The world is represented as an array of lines (i.e., shared memory 
-   implemented as RAM blocks). 
-   The lines are represented as boolean vectors (i.e., large immediate values) *)
+let alive(l,i) = 
+  if vect_nth(l,border(i,vect_size l)) then 1 else 0 ;;
 
-(* count alive neighbors *)
-let sum_neighborhood(f,l0,l1,l2,i) =
-  f(l0,i-1) + f(l1,i-1) + f(l2,i-1) + 
-  f(l0,i)               + f(l2,i) +
-  f(l0,i+1) + f(l1,i+1) + f(l2,i+1) ;;
+let sum_neighborhood(l0,l1,l2,i) =
+  alive(l0,i-1) + alive(l1,i-1) + alive(l2,i-1) + 
+  alive(l0,i)                   + alive(l2,i) +
+  alive(l0,i+1) + alive(l1,i+1) + alive(l2,i+1) ;;
 
-(* instantaneously transform one line of the world 
-   from the neighboring lines *)
-let next_cell_with_lines(i,cell,line0,line1,line2) =
-  let access(l,i) = 
-    let i_norm = if i >= vect_size l then i - vect_size l else
-                 if i < 0 then i + vect_size l
-                 else i in
-    if vect_nth(l,i_norm) then 1 else 0
-  in
-  let sum : int<4> = sum_neighborhood(access,line0,line1,line2,i) in
+let next_cell_with_lines(i,line0,line1,line2) =
+  let cell = vect_nth(line1,i) in
+  let sum : int<4> = sum_neighborhood(line0,line1,line2,i) in
   (cell & sum = 2) or (sum = 3) ;;
 
-(* transform the world: an entire line is processed each 5 cycles *)
-let vect_array_life (world : bool vector<'a> array<'b>) : unit = 
+let vect_array_life (world : bool vect<'a> array<'b>) : unit = 
   let first_line = get(world,0) in
-  
   let rec aux (line0,line1,i) : unit =
     if i < length(world) then
-      (* prefetch the next line *)
-      (let line2 = if i = length(world)-1 
+      (let line2 = if i = length(world) - 1 
                    then first_line 
-                   else get(world,i+1)             (* memory read, takes 2 cycles *)
+                   else get(world,i+1)
        in
        let next (j,cell) = 
-         next_cell_with_lines(j,cell,line0,line1,line2)
+         next_cell_with_lines(j,line0,line1,line2)
        in
-       let current_line = 
-         vect_mapi(next,line1)      (* vect_mapi is a built-in, instantaneous operator *)
-       in
-       set(world,i,current_line);                  (* memory write, takes 2 cycles *)
-       aux(line1,line2,i+1))                       (* tail call, takes 1 cycle *)
+       set(world,i,(vect_mapi(next,line1)));
+       aux(line1,line2,i+1))
     else ()
-  in aux(get(world,length(world)-1),first_line,0) ;;
+in aux(get(world,length(world)-1),first_line,0) ;;
 
 
 (** ==== measure execution time ==== *)
@@ -52,15 +39,15 @@ let counter () =
 
 (**
    $ ./eclat ../benchs/game-of-life/v3/v3.ecl  -main=chrono_main
-   $ make simul NS=4000000
-     ~> execution time = 326 cycles
+   $ make simul NAME=chrono_main
 *)
 let chrono_main () =
   let cy = counter () in
   let ((),rdy) =
     exec
-      let w0 : bool vector<64> = vect_create(64,false) in
-      let w : bool vector<64> array<64> = create 64 in
+      let n = 8 in
+      let w0 : bool vect<8> = vect_create<8>(false) in
+      let w : bool vect<8> array<8> = create<8>() in
       set(w,0,w0);
       (** no initiation (which would take time), 
           this does not change the timing behavior. *)
@@ -85,14 +72,14 @@ let print_world (world) : unit =
   print_string "==============";
   print_newline () ;;
 
-(* ==== RTL simulation (displaying successive generations) ==== *)
 
 (** 
     $ ./eclat -relax ../benchs/game-of-life/v3/v3.ecl  -main=test_main
+    $  make simul NAME=test_main NS=400000
  *)
 let test_main () =
-  let w0 = vect_make(size_create 8,false) in
-  let w = create(8) in
+  let w0 = vect_create<8>(false) in
+  let w = create<8>() in
   for i = 0 to length w - 1 do
     let wi = if i = 0 then vect_copy_with(vect_copy_with(w0,0,true),2,true) else
              if i = 1 then vect_copy_with(vect_copy_with(w0,1,true),2,true) else
@@ -107,9 +94,10 @@ let test_main () =
       loop(i-1)
     )
   in 
-  loop(2000);    (* 2000 successive generations *)
+  loop(2000);
 
   if vect_nth(get(w,0),0) then 0 else 1 ;;
+
 
 
 (** ==== synthesis ==== *)

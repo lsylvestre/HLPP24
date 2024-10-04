@@ -28,6 +28,7 @@ MENHIR=menhir --unused-tokens --unused-precedence-levels --infer --ocamlc "ocaml
 OBJS= $(SRC_DIR)/prelude.cmx \
       \
       $(SRC_DIR)/frontend/current_filename.cmx \
+      $(SRC_DIR)/compile/backend/flag_mealy.cmx \
       \
       $(SRC_DIR)/typing/types.cmx \
       $(SRC_DIR)/operators.cmx \
@@ -44,10 +45,11 @@ OBJS= $(SRC_DIR)/prelude.cmx \
       \
       $(SRC_DIR)/frontend/fix_int_lit_size.cmx \
       \
-      $(SRC_DIR)/compile/combinational.cmx \
+      $(SRC_DIR)/compile/instantaneous.cmx \
       $(SRC_DIR)/typing/typing.cmx \
       $(SRC_DIR)/syntax/ast_mk.cmx \
       $(SRC_DIR)/compile/middle_end/check_tail_call.cmx \
+      $(SRC_DIR)/compile/middle_end/check_exec_mem.cmx \
       $(SRC_DIR)/compile/middle_end/normalize/fun_assign_name.cmx \
       \
       $(SRC_DIR)/compile/middle_end/normalize/propagation.cmx \
@@ -56,10 +58,10 @@ OBJS= $(SRC_DIR)/prelude.cmx \
       $(SRC_DIR)/compile/middle_end/normalize/let_floating.cmx \
       $(SRC_DIR)/compile/middle_end/transform/insert_bound_checking.cmx \
       $(SRC_DIR)/compile/middle_end/transform/globalize_arrays.cmx \
+      $(SRC_DIR)/compile/middle_end/transform/inline.cmx \
       $(SRC_DIR)/compile/middle_end/transform/specialize_ref.cmx \
       $(SRC_DIR)/compile/middle_end/transform/specialize.cmx \
       $(SRC_DIR)/compile/middle_end/transform/lambda_lifting.cmx \
-      $(SRC_DIR)/compile/middle_end/transform/inline.cmx \
       $(SRC_DIR)/compile/middle_end/transform/unroll.cmx \
       $(SRC_DIR)/compile/middle_end/transform/matching.cmx \
       $(SRC_DIR)/compile/middle_end/transform/expand.cmx \
@@ -78,6 +80,7 @@ OBJS= $(SRC_DIR)/prelude.cmx \
       $(SRC_DIR)/compile/inspect/display_target.cmx \
       $(SRC_DIR)/compile/backend/target/fsm_typing.cmx \
       $(SRC_DIR)/compile/backend/fsm_comp.cmx \
+      $(SRC_DIR)/compile/backend/count_externals.cmx \
       \
       $(SRC_DIR)/compile/backend/flat_let_atom.cmx \
       $(SRC_DIR)/compile/backend/list_machines.cmx \
@@ -85,12 +88,14 @@ OBJS= $(SRC_DIR)/prelude.cmx \
       $(SRC_DIR)/compile/backend/optim/target_propagation.cmx \
       $(SRC_DIR)/compile/backend/optim/remove_assigned_but_not_read_vars.cmx \
       \
+      $(SRC_DIR)/compile/backend/gen_vhdl_aux.cmx \
       $(SRC_DIR)/compile/backend/gen_vhdl.cmx \
+      $(SRC_DIR)/compile/backend/gen_vhdl_moore.cmx \
       \
       $(SRC_DIR)/compile/compile.cmx \
       $(SRC_DIR)/compile/gen_testbench/gen_testbench.cmx\
       \
-      $(SRC_DIR)/interp/norm.cmx \
+      $(SRC_DIR)/interp/special_subst.cmx \
       $(SRC_DIR)/interp/interp.cmx \
       \
       $(SRC_DIR)/frontend/parser.cmx \
